@@ -17,7 +17,7 @@ int saaj_cd(char **args), saaj_ls(char **args),
     
 size_t my_strlen(const char *s);
 
-void external_cmd(char **args);
+void external_cmd(char **args, bool is_background);
 
 typedef int (*BuiltInFunction)(char **args);
 
@@ -53,7 +53,7 @@ int dispatch_cmd(char **args, bool is_background) {
         }
     }
 
-    external_cmd(args);
+    external_cmd(args, is_background);
     return 0;
 }
 
@@ -73,16 +73,19 @@ size_t my_strlen(const char *s) {
     return len;
 }
 
-void external_cmd(char **args) {
+void external_cmd(char **args, bool is_background) {
     pid_t pid = fork();
     if(pid == 0) {//es el proceso hijo        
         execvp(args[0], args);
         write(2, "Error al ejecutar el comando\n", 29);//este mensaje se muestra si execvp falla
         _exit(1);
     }else {
-        int status;
-        if(waitpid(pid, &status, 0) == -1){
-            write(2, "Error al esperar el proceso hijo\n", 34);
+        if(is_background) {
+            write(1, "Proceso en segundo plano iniciado\n", 35);
+            return;
+        }else {
+            int status;
+            waitpid(pid, &status, 0);
         }
     }
 }
@@ -94,6 +97,12 @@ int main(){
     int readed;
 
     while(1){
+
+        int status;
+        while(waitpid(-1, &status, WNOHANG) > 0) {//se limpian zombies WNOHANG verifica su existencia
+            write(1, "Proceso en segundo plano finalizado\n", 36);
+        }
+
         char *p = line;
         int counter = 0;
 
@@ -129,8 +138,17 @@ int main(){
                         }
                     }
                     args[counter] = NULL;
+
+                    bool is_background = 0;
+
+                    if(counter > 0 && (my_strcmp(args[counter - 1], "&") == 0)) {
+                        is_background = true;
+                        args[counter - 1] = NULL;
+                        counter--;
+                    }
+
                     if(counter > 0) {
-                        dispatch_cmd(args, 0);
+                        dispatch_cmd(args, is_background);
                     }
                 }
         //control de lectura 
