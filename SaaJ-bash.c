@@ -13,7 +13,8 @@
 int saaj_cd(char **args), saaj_ls(char **args),
     saaj_pwd(char **args), saaj_mkdir(char **args), saaj_rm(char **args),
     saaj_cp(char **args), saaj_mv(char **args), saaj_cat(char **args),
-    my_strcmp(const char *s1, const char *s2), dispatch_cmd(char **args, bool is_background);
+    my_strcmp(const char *s1, const char *s2), dispatch_cmd(char **args, bool is_background),
+    redirect_io(char **args);
     
 size_t my_strlen(const char *s);
 
@@ -46,10 +47,79 @@ struct linux_dirent64 {
     char            d_name[];
 };
 
+int redirect_io(char **args) {
+    int i = 0;
+    int fd;
+
+    while(args[i] != NULL) {
+        //caso 1: redirige la salida estándar a un archivo
+        if(my_strcmp(args[i], ">") == 0) {
+            if(args[i + 1] == NULL) {
+                write(2, "Error: se requiere un archivo para redireccionar la salida\n", 60);
+                return -1;
+            }
+
+            fd = open(args[i + 1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+            if(fd < 0) {
+                write(2, "Error al abrir o crear el archivo de salida\n", 45);
+                return -1;
+            }
+
+            dup2(fd, 1);
+            close(fd);
+
+            args[i] = NULL;
+        }
+        else if(my_strcmp(args[i], "<") == 0) {
+            if(args[i] + 1 == NULL) {
+                write(2, "Error: se requiere un archivo para redireccionar la entrada\n", 60);
+                return -1;
+            }
+
+            fd = open(args[i + 1], O_RDONLY);
+
+            if(fd < 0) {
+                write(2, "Error al abrir el archivo de entrada\n", 36);
+                return -1;
+            }
+
+            dup2(fd, 0);
+            close(fd);
+
+            args[i] = NULL;
+        }
+        
+        i++;
+
+    }
+
+    return 0;
+}
+
 int dispatch_cmd(char **args, bool is_background) {
     for(BuiltInCommand *cmd = built_in_commands; cmd -> name != NULL; cmd++) {
         if(my_strcmp(args[0], cmd -> name) == 0) {
-            return cmd -> func(args);
+            
+            int saved_stdout = dup(1);
+            int saved_stdin = dup(0);
+            //en caso que exista un error se restauran 
+            if(redirect_io(args) == -1) {
+                write(2, "Error en la redirección de E/S\n", 31);
+                close(saved_stdin);
+                close(saved_stdout);               
+                return -1;
+            }
+            //si todo funciona correctamente se ejecuta el comando
+            int resultado = cmd -> func(args);
+        
+            dup2(saved_stdin, 0);
+            dup2(saved_stdout, 1);
+
+            close(saved_stdin);
+            close(saved_stdout);
+
+            return resultado;
         }
     }
 
@@ -76,6 +146,11 @@ size_t my_strlen(const char *s) {
 void external_cmd(char **args, bool is_background) {
     pid_t pid = fork();
     if(pid == 0) {//es el proceso hijo        
+        
+        if(redirect_io(args) == -1) {
+            _exit(EXIT_FAILURE);
+        }
+        
         execvp(args[0], args);
         write(2, "Error al ejecutar el comando\n", 29);//este mensaje se muestra si execvp falla
         _exit(1);
@@ -89,7 +164,6 @@ void external_cmd(char **args, bool is_background) {
         }
     }
 }
-//TODO: completar ejecución en segundo plano
 //TODO: implementar comandos externos
 int main(){
     char line[MAX_LINE];
