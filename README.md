@@ -8,19 +8,20 @@ Ingresar: `make`
 `make debug`. `make clean`, `make run`
 #### Ejecutar
 Ingresar: `./SaaJ-bash`
-Ingresar: `make run`
 El proyecto implementa los siguientes comandos internos:
 
-| Comando | Descripción                                                                                                                                              | Uso                                             | Ejemplo                        |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------ |
-| ls      | Lista los archivos y ficheros presentes en la ruta de trabajo actual                                                                                     | `ls`                                            |                                |
-| cd      | Accede a la ruta especificada                                                                                                                            | `cd <fichero/ruta>`                             | `cd /usr/bin`                  |
-| pwd     | Imprime la ruta de trabajo actual                                                                                                                        | `pwd`                                           |                                |
-| mkdir   | Crea un nuevo fichero en la ruta de trabajo actual                                                                                                       | `mkdir <nombre_fichero>`                        | `mkdir prueba`                 |
-| rm      | Elimina un fichero o archivo                                                                                                                             | `rm <nombre_fichero/nombre_archivo.ext>`        | `rm prueba`<br>`rm prueba.txt` |
-| cp      | Copia un archivo                                                                                                                                         | `cp <archivo_origen.ext> <archivo_destino.ext>` | `cp prueba.txt copia.txt`      |
-| mv      | Mueve y renombra archivos. (Limitación: el comando no soporta mover un archivo a un directorio existente debido al uso directo de la syscall `rename()`) | `mv <archivo_origen.ext> <archivo_destino>`     | `mv prueba.txt prueba2.txt`    |
-| cat     | Muestra el contenido de un archivo                                                                                                                       | `cat <nombre_archivo.ext>`                      | `cat prueba.txt`               |
+| Comando | Descripción                                                              | Uso                                                                                         | Ejemplo                                                |
+| ------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| ls      | Lista los archivos y ficheros presentes en la ruta de trabajo actual     | `ls`                                                                                        |                                                        |
+| cd      | Accede a la ruta especificada                                            | `cd <fichero/ruta>`                                                                         | `cd /usr/bin`                                          |
+| pwd     | Imprime la ruta de trabajo actual                                        | `pwd`                                                                                       |                                                        |
+| mkdir   | Crea un nuevo fichero en la ruta de trabajo actual                       | `mkdir <nombre_fichero>`                                                                    | `mkdir prueba`                                         |
+| rm      | Elimina un fichero o archivo                                             | `rm <nombre_fichero/nombre_archivo.ext>`                                                    | `rm prueba`<br>`rm prueba.txt`                         |
+| cp      | Copia un archivo                                                         | `cp <archivo_origen.ext> <archivo_destino.ext>`                                             | `cp prueba.txt copia.txt`                              |
+| mv      | Mueve y renombra archivos. Mueve un archivo a un directorio existente    | `mv <archivo_origen.ext> <archivo_destino.ext>`<br>`mv <archivo_destino.txt> <directorio/>` | `mv prueba.txt prueba2.txt`<br>`mv prueba.txt borrar/` |
+| cat     | Muestra el contenido de un archivo                                       | `cat <nombre_archivo.ext>`                                                                  | `cat prueba.txt`                                       |
+| >       | Redirecciona la salida estándar (consola) hacía el archivo especificado  | `<comando> > <archivo_destino.ext>`                                                         | `ls > prueba.txt`                                      |
+| <       | Redirecciona la entrada estándar (teclado) hacía el archivo especificado | `<comando> < <archivo_origen.ext>`                                                          | `cat < prueba.txt`                                     |
 El shell implementa una función para ejecutar comandos externos, que se encuentren especificados en la variable de entorno `PATH`. Algunos ejemplos son:
 - `vim`: editor de texto
 - `nano`: editor de texto

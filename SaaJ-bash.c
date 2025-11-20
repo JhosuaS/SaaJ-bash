@@ -15,6 +15,10 @@ int saaj_cd(char **args), saaj_ls(char **args),
     saaj_cp(char **args), saaj_mv(char **args), saaj_cat(char **args),
     my_strcmp(const char *s1, const char *s2), dispatch_cmd(char **args, bool is_background),
     redirect_io(char **args);
+
+char *my_strcpy(char *dest, const char *src);
+
+char *my_strcat(char *dest, const char *src);
     
 size_t my_strlen(const char *s);
 
@@ -143,6 +147,29 @@ size_t my_strlen(const char *s) {
     return len;
 }
 
+char *my_strcpy(char *dest, const char *src) {
+    char *original_dest = dest;
+
+    while(*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+
+    *dest = '\0';
+    return original_dest;
+}
+
+char *my_strcat(char *dest, const char *src) {
+    char *dest_start = dest;
+    char *dest_end = dest_start + my_strlen(dest);
+    dest = dest_end;
+
+    my_strcpy(dest, src);
+
+    return dest_start;
+}
+
 void external_cmd(char **args, bool is_background) {
     pid_t pid = fork();
     if(pid == 0) {//es el proceso hijo        
@@ -164,7 +191,7 @@ void external_cmd(char **args, bool is_background) {
         }
     }
 }
-//TODO: implementar comandos externos
+
 int main(){
     char line[MAX_LINE];
     char *args[20];
@@ -382,7 +409,27 @@ int saaj_mv(char **args) {
         return 1;
     }
 
-    if(rename(args[1], args[2]) != 0) {
+    char *src = args[1];
+    char *dest = args[2];
+    struct stat st;
+    char buffer_path[4096];
+    char *filename_ptr = src;
+
+    char *p;
+    for(p = src; *p != '\0'; p++) {
+        if(*p == '/') {
+            filename_ptr = p + 1;
+        }
+    }
+
+    if(stat(dest, &st) == 0 && (st.st_mode & S_IFMT) == S_IFDIR) {
+        my_strcpy(buffer_path, dest);
+        my_strcat(buffer_path, "/");
+        my_strcat(buffer_path, filename_ptr);
+        dest = buffer_path;
+    } 
+
+    if(rename(src, dest) != 0) {
         write(2, "Error al mover o renombrar el archivo/directorio\n", 49);
         return 1;
     }
